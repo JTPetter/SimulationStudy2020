@@ -104,7 +104,7 @@ dataGenerationRANOVA <- function(normality, k, sphericity,  n, hypothesis){
 ################################################################################
 
 
-repetitions <- 1:100
+repetitions <- 1:1000
 n <- c(15, 40, 150)
 normality <- c(TRUE, FALSE)
 hypothesis <- c('H0', 'Ha')
@@ -115,6 +115,7 @@ results <- data.frame(n = NA, hypothesis = NA, normality = NA, p = NA, mean = NA
 
 for(i in 1:nrow(options)){
   set.seed(i)
+  print(paste(round((i/nrow(options)*100),digits = 2),'%')) #percent complete
   data <- dataGenerationPairedT(normality = options[["normality"]][i], n = options[["n"]][i], 
                                 hypothesis = options[["hypothesis"]][i])
   p.value <- t.test(data, mu = 0)$p.value
@@ -123,15 +124,12 @@ for(i in 1:nrow(options)){
   results[i,] <- list(n = options[["n"]][i], hypothesis = options[["hypothesis"]][i], normality = options[["normality"]][i],
                       p = p.value, mean = mean(data), BF = BF, Shapiro = shapiro.test(data)$p.value)
 }
-
+write.csv(results, 'pairedTresults2.csv')
 
 ########################################################################
 #RESULTS PAIRED T TEST
 ########################################################################
-results <- read.csv("pairedTresults.csv")
-
-par(mfrow=c(2,3))
-
+results <- read.csv("pairedTresults2.csv")
 
 #Normal Data
 
@@ -160,7 +158,7 @@ Has <- subset(Skewed, Skewed$hypothesis == 'Ha')
 
 #H0 Normal vs Skewed Frequentist
 #plotting
-#pdf("pairedTtestH0.png")
+pdf("pairedTtestH0.pdf")
 
 m <- matrix(c(1,1,1,2,3,4,5,6,7),nrow = 3,ncol = 3,byrow = TRUE)
 
@@ -175,13 +173,13 @@ type1errors <- data.frame()
 for(i in 1:length(n)){
   nH0n <- subset(H0n, H0n$n == n[i])
   type1 <- length(nH0n$n[nH0n$p < 0.05])/nrow(nH0n) # type 1 errors
-  plot(density((nH0n$p), from = 0 ), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "", xlim = c(0,1))
+  plot(density((nH0n$p), from = 0, to = 1, kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "p-Value", xlim = c(0,1))
   abline(v = 0.05)
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Normal", type1 = type1))
-
+  
   nH0s <- subset(H0s, H0s$n == n[i])
   type1 <- length(nH0s$n[nH0s$p < 0.05])/nrow(nH0s) # type 1 errors
-  lines(density((nH0s$p), from = 0), lty = 2 ,lwd = 1,)
+  lines(density((nH0s$p), from = 0, to = 1, kernel = 'rectangular' ), lty = 2 ,lwd = 1,)
   abline(v = 0.05)
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Skewed", type1 = type1))
   
@@ -193,14 +191,14 @@ type1errors <- data.frame()
 for(i in 1:length(n)){
   nH0n <- subset(H0n, H0n$n == n[i])
   type1 <- length(nH0n$n[nH0n$BF > 3])/nrow(H0n) #type 1 errors
-  plot(density(log(nH0n$BF)), lty = 1,lwd = 1, main = paste('n =', n[i]), xlab = "")
+  plot(density(log(nH0n$BF), kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =', n[i]), xlab = "log(BF)")
   abline(v = -log(3))
   abline(v = log(3))
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Normal", type1 = type1))
-
+  
   nH0s <- subset(H0s, H0s$n == n[i])
   type1 <- length(nH0s$n[nH0s$BF > 3])/nrow(nH0s) #type I errors
-  lines(density(log(nH0s$BF)), lty = 2,lwd = 1)
+  lines(density(log(nH0s$BF), kernel = 'rectangular' ), lty = 2,lwd = 1)
   abline(v = -log(3))
   abline(v = log(3))
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Skewed", type1 = type1))
@@ -208,11 +206,11 @@ for(i in 1:length(n)){
 }
 type1errors
 
-#dev.off()
+dev.off()
 
 #Ha Normal vs Skewed Frequentist
 #plotting
-#pdf("pairedTtestHa.pdf")
+pdf("pairedTtestHa.pdf")
 m <- matrix(c(1,1,1,2,3,4,5,6,7),nrow = 3,ncol = 3,byrow = TRUE)
 
 layout(mat = m)
@@ -226,13 +224,20 @@ powerFrame <- data.frame()
 for(i in 1:length(n)){
   nHan <- subset(Han, Han$n == n[i])
   power <- 1 - length(nHan$n[nHan$p > 0.05])/nrow(nHan) # power: 1 - type 2 error
-  plot(density(nHan$p, from = 0), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "", xlim = c(0,0.5))
+  if(n[i] == 15){
+    to <- 1
+  }else if(n[i] == 40){
+    to <- 0.5
+  }else if(n[i] == 150){
+    to <- 0.001
+  }
+  plot(density(nHan$p, from = 0, to = to, kernel = 'rectangular'), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "p-Value")
   abline(v = 0.05)
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Normal", power = power))
-
+  
   nHas <- subset(Has, Has$n == n[i])
   power <- 1 - length(nHas$n[nHas$p > 0.05])/nrow(nHas) # power: 1 - type 2 error
-  lines(density(nHas$p, from = 0), lty = 2,lwd = 1,)
+  lines(density(nHas$p, from = 0, to = to, kernel = 'rectangular' ), lty = 2,lwd = 1,)
   abline(v = 0.05)
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Skewed", power = power))
 }
@@ -244,20 +249,20 @@ powerFrame <- data.frame()
 for(i in 1:length(n)){
   nHan <- subset(Han, Han$n == n[i])
   power <- 1 - length(nHan$n[nHan$BF < 3])/nrow(nHan) # power: 1 - type 2 error
-  plot(density(log(nHan$BF)), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "", xlim = c(-3, 15))
+  plot(density(log(nHan$BF), kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "log(BF)", xlim = c(-3, 15))
   abline(v = log(3))
   abline(v = -log(3))
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Normal", power = power))
-
+  
   nHas <- subset(Has, Has$n == n[i])
   power <- 1- length(nHas$n[nHas$BF < 3])/nrow(nHas) #true positive
-  lines(density(log(nHas$BF)), lty = 2,lwd = 1, main = paste('n =',n[i]))
+  lines(density(log(nHas$BF), kernel = 'rectangular' ), lty = 2,lwd = 1, main = paste('n =',n[i]))
   abline(v = log(3))
   abline(v = -log(3))
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Skewed", power = power))
 }
 powerFrame
-#dev.off()
+dev.off()
 
 #######################################################################
 #Repeated Measures ANOVA
@@ -265,7 +270,7 @@ powerFrame
 
 
 
-repetitions <- 1:100
+repetitions <- 1:1000
 n <- c(15, 45, 150)
 k <- c(3,5)
 sphericity <- c(TRUE,FALSE)
@@ -301,7 +306,7 @@ for(i in 1:nrow(options)){
 }
 
 
-
+write.csv(results, 'RANOVAsimulation2.csv')
 
 ###################################################
 #RESULTS RANOVA
@@ -311,9 +316,8 @@ for(i in 1:nrow(options)){
 
 
 
-results <- read.csv("RANOVAsimulation.csv")
+results <- read.csv("RANOVAsimulation2.csv")
 
-par(mfrow=c(3,2))
 
 #Manipulation check
 #NothingViolated
@@ -355,7 +359,7 @@ normViolatedH0 <- subset(H0data, H0data$normality == FALSE)
 
 #H0 Nothing violated vs Sphericity Violated vs Normality Violated Frequentist
 
-#pdf('ANOVAh0Freq.pdf')
+pdf('ANOVAh0Freq.pdf')
 
 
 m <- matrix(c(1,1,1,2,4,6,3,5,7),nrow = 3,ncol = 3,byrow = TRUE)
@@ -375,28 +379,28 @@ for(i in 1:length(n)){
     subgroupSize <- k[j]
     nnonViolatedH0 <- subset(nonViolatedH0, nonViolatedH0$n == sampleSize & nonViolatedH0$k == subgroupSize)
     type1 <- length(nnonViolatedH0$n[nnonViolatedH0$p < 0.05])/nrow(nnonViolatedH0) #type I errors
-    plot(density((nnonViolatedH0$p), from = 0, to = 1), lty = 1,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]), xlab="")
+    plot(density((nnonViolatedH0$p), from = 0, to = 1, kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab="p-Value", xlim = c(0, 1))
     abline(v = 0.05)
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "None", type1 = type1))
     
     nspherViolatedH0 <- subset(spherViolatedH0, spherViolatedH0$n == sampleSize & spherViolatedH0$k == subgroupSize)
     type1 <- length(nspherViolatedH0$n[nspherViolatedH0$p < 0.05])/nrow(nspherViolatedH0) #type I errors
-    lines(density((nspherViolatedH0$p)), lty = 2, lwd = 1)
+    lines(density((nspherViolatedH0$p),from = 0, to = 1,  kernel = 'rectangular'), lty = 2, lwd = 1)
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Sphericity", type1 = type1))
     
     nnormViolatedH0 <- subset(normViolatedH0, normViolatedH0$n == sampleSize & normViolatedH0$k == subgroupSize)
     type1 <- length(nnormViolatedH0$n[nnormViolatedH0$p < 0.05])/nrow(nnormViolatedH0) #type I errors
-    lines(density((nnormViolatedH0$p)), lty = 3, lwd = 1)
+    lines(density((nnormViolatedH0$p), from = 0, to = 1, kernel = 'rectangular'), lty = 3, lwd = 1)
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Normality", type1 = type1))
   }
 }
 type1errors
 
-#dev.off()
+dev.off()
 
 #H0 Nothing violated vs Sphericity Violated vs Normality Violated Bayesian
 
-#pdf('ANOVAh0Bayes.pdf')
+pdf('ANOVAh0Bayes.pdf')
 
 m <- matrix(c(1,1,1,2,4,6,3,5,7),nrow = 3,ncol = 3,byrow = TRUE)
 
@@ -417,21 +421,21 @@ for(i in 1:length(n)){
     subgroupSize <- k[j]
     nnonViolatedH0 <- subset(nonViolatedH0, nonViolatedH0$n == sampleSize & nonViolatedH0$k == subgroupSize)
     type1 <- length(nnonViolatedH0$n[nnonViolatedH0$BF > 3])/nrow(nnonViolatedH0) #type I errors
-    plot(density(log(nnonViolatedH0$BF)), lty = 1,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]), xlab = '')
+    plot(density(log(nnonViolatedH0$BF), kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'log(BF)')
     abline(v = -log(3))
     abline(v = log(3))
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "None", type1 = type1))
     
     nspherViolatedH0 <- subset(spherViolatedH0, spherViolatedH0$n == sampleSize & spherViolatedH0$k == subgroupSize)
     type1 <- length(nspherViolatedH0$n[nspherViolatedH0$BF > 3])/nrow(nspherViolatedH0) #type I errors
-    lines(density(log(nspherViolatedH0$BF)), lty = 2,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]))
+    lines(density(log(nspherViolatedH0$BF), kernel = 'rectangular'), lty = 2,lwd = 1)
     abline(v = -log(3))
     abline(v = log(3))
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Sphericity", type1 = type1))
     
     nnormViolatedH0 <- subset(normViolatedH0, normViolatedH0$n == sampleSize & normViolatedH0$k == subgroupSize)
     type1 <- length(nnormViolatedH0$n[nnormViolatedH0$BF > 3])/nrow(nnormViolatedH0) #type I errors
-    lines(density(log(nnormViolatedH0$BF)), lty = 3,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]))
+    lines(density(log(nnormViolatedH0$BF), kernel = 'rectangular'), lty = 3,lwd = 1)
     abline(v = -log(3))
     abline(v = log(3))
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "normality", type1 = type1))
@@ -439,7 +443,7 @@ for(i in 1:length(n)){
 }
 type1errors
 
-#dev.off()
+dev.off()
 
 #Under Ha
 Hadata <- subset(results, results$hypothesis == 'Ha')
@@ -458,7 +462,7 @@ normViolatedHa <- subset(Hadata, Hadata$normality == FALSE)
 
 #Ha Nothing violated vs Sphericity Violated vs Normality Violated Frequentist
 
-#pdf('ANOVAhaFreq.pdf')
+pdf('ANOVAhaFreq.pdf')
 
 m <- matrix(c(1,1,1,2,4,6,3,5,7),nrow = 3,ncol = 3,byrow = TRUE)
 
@@ -475,11 +479,19 @@ powerFrame <- data.frame()
 
 for(i in 1:length(n)){
   sampleSize <- n[i]
+  if(sampleSize == 15){
+    to <- 1
+  }else if(sampleSize == 45){
+    to <- 0.10
+  }else if(sampleSize == 150){
+    to <- 0.001
+  }
   for(j in 1:length(k)){
     subgroupSize <- k[j]
     nnonViolatedHa <- subset(nonViolatedHa, nonViolatedHa$n == sampleSize & nonViolatedHa$k == subgroupSize)
     power <- 1 - length(nnonViolatedHa$n[nnonViolatedHa$p > 0.05])/nrow(nnonViolatedHa) #power
-    plot(density((nnonViolatedHa$p), from = 0, to = 1), lty = 1,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]), xlab = '')
+    
+    plot(density((nnonViolatedHa$p), from = 0, to = to), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'p-Value')
     abline(v = 0.05)
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "None", power = power))
     
@@ -496,11 +508,11 @@ for(i in 1:length(n)){
 }
 powerFrame
 
-#dev.off()
+dev.off()
 
 #Ha Nothing violated vs Sphericity Violated vs Normality Violated Bayesian
 
-#pdf('ANOVAhaBayes.pdf')
+pdf('ANOVAhaBayes.pdf')
 
 m <- matrix(c(1,1,1,2,4,6,3,5,7),nrow = 3,ncol = 3,byrow = TRUE)
 
@@ -521,21 +533,21 @@ for(i in 1:length(n)){
     subgroupSize <- k[j]
     nnonViolatedHa <- subset(nonViolatedHa, nonViolatedHa$n == sampleSize & nonViolatedHa$k == subgroupSize)
     power <- 1 - length(nnonViolatedHa$n[nnonViolatedHa$BF < 3])/nrow(nnonViolatedHa) #power
-    plot(density(log(nnonViolatedHa$BF)), lty = 1,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]), xlab = '')
+    plot(density(log(nnonViolatedHa$BF), kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'log(BF)')
     abline(v = -log(3))
     abline(v = log(3))
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "None", power = power))
     
     nspherViolatedHa <- subset(spherViolatedHa, spherViolatedHa$n == sampleSize & spherViolatedHa$k == subgroupSize)
     power <- 1 - length(nspherViolatedHa$n[nspherViolatedHa$BF < 3])/nrow(nspherViolatedHa) #power
-    lines(density(log(nspherViolatedHa$BF)), lty = 2,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]))
+    lines(density(log(nspherViolatedHa$BF), kernel = 'rectangular'), lty = 2,lwd = 1)
     abline(v = -log(3))
     abline(v = log(3))
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Sphericity", power = power))
     
     nnormViolatedHa <- subset(normViolatedHa, normViolatedHa$n == sampleSize & normViolatedHa$k == subgroupSize)
     power <- 1 - length(nnormViolatedHa$n[nnormViolatedHa$BF < 3])/nrow(nnormViolatedHa) #power
-    lines(density(log(nnormViolatedHa$BF)), lty = 3,lwd = 1, main = paste("n = ", n[i], 'k =', k[j]))
+    lines(density(log(nnormViolatedHa$BF), kernel = 'rectangular'), lty = 3,lwd = 1)
     abline(v = -log(3))
     abline(v = log(3))
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Normality", power = power))
@@ -543,4 +555,4 @@ for(i in 1:length(n)){
 }
 powerFrame
 
-#dev.off()
+dev.off()
