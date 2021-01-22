@@ -167,20 +167,26 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Normal", "Skewed"),lty = c(1,2),lwd=2.5, cex=1.5, horiz = TRUE)
+       legend = c("Normal", "Skewed"),lty = c(1,2),lwd=2.5, cex=2, horiz = F)
+par(las = 1)
 
 type1errors <- data.frame()
 for(i in 1:length(n)){
   nH0n <- subset(H0n, H0n$n == n[i])
   type1 <- length(nH0n$n[nH0n$p < 0.05])/nrow(nH0n) # type 1 errors
-  plot(density((nH0n$p), from = 0, to = 1, kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "p-Value", xlim = c(0,1))
-  abline(v = 0.05)
+  plot(density((nH0n$p), from = 0, to = 1 ), lty = 1,lwd = 2, main = paste('n =',n[i]), xlab = "", ylab = "",
+       xlim = c(0,1),
+       ylim = c(0.5, 1.3), bty = 'n', cex.main=2.5, cex.axis = 1.1, font.main = 1)
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Normal", type1 = type1))
   
   nH0s <- subset(H0s, H0s$n == n[i])
   type1 <- length(nH0s$n[nH0s$p < 0.05])/nrow(nH0s) # type 1 errors
-  lines(density((nH0s$p), from = 0, to = 1, kernel = 'rectangular' ), lty = 2 ,lwd = 1,)
-  abline(v = 0.05)
+  lines(density((nH0s$p), from = 0, to = 1), lty = 2 ,lwd = 2,)
+  abline(v = 0.05, lwd = 2, col = 'grey40')
+  if(n[i] == 15)
+    title(ylab="Density", line=2.7, cex.lab=1.7)
+  if(n[i] == 40)
+    title(xlab = substitute(paste(italic("p"), "-value")), line=3.2, cex.lab=2.5)
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Skewed", type1 = type1))
   
 }
@@ -191,16 +197,21 @@ type1errors <- data.frame()
 for(i in 1:length(n)){
   nH0n <- subset(H0n, H0n$n == n[i])
   type1 <- length(nH0n$n[nH0n$BF > 3])/nrow(H0n) #type 1 errors
-  plot(density(log(nH0n$BF), kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =', n[i]), xlab = "log(BF)")
+  plot(density(log(nH0n$BF)), lty = 1,lwd = 2, main = "", xlab = "", ylab = "",bty = 'n',
+       ylim = c(0, 2), cex.main=1.7, cex.axis = 1.1)
   abline(v = -log(3))
   abline(v = log(3))
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Normal", type1 = type1))
   
   nH0s <- subset(H0s, H0s$n == n[i])
   type1 <- length(nH0s$n[nH0s$BF > 3])/nrow(nH0s) #type I errors
-  lines(density(log(nH0s$BF), kernel = 'rectangular' ), lty = 2,lwd = 1)
-  abline(v = -log(3))
-  abline(v = log(3))
+  lines(density(log(nH0s$BF)), lty = 2,lwd = 2)
+  abline(v = -log(3),  lwd = 2, col = 'grey40')
+  abline(v = log(3),  lwd = 2, col = 'grey40')
+  if(n[i] == 15)
+    title(ylab="Density", line=2.7, cex.lab=1.7)
+  if(n[i] == 40)
+    title(xlab = "log(BF)", line=3.2, cex.lab=2.5)
   type1errors <- rbind(type1errors, list(n = n[i], shape = "Skewed", type1 = type1))
   
 }
@@ -218,7 +229,8 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Normal", "Skewed"),lty = c(1,2),lwd=2.5, cex=1.5, horiz = TRUE)
+       legend = c("Normal", "Skewed"),lty = c(1,2),lwd=2.5, cex=2, horiz = F)
+par(las = 1)
 
 powerFrame <- data.frame()
 for(i in 1:length(n)){
@@ -226,19 +238,26 @@ for(i in 1:length(n)){
   power <- 1 - length(nHan$n[nHan$p > 0.05])/nrow(nHan) # power: 1 - type 2 error
   if(n[i] == 15){
     to <- 1
+    to2 <- 4
   }else if(n[i] == 40){
     to <- 0.5
+    to2 <- 25
   }else if(n[i] == 150){
     to <- 0.001
+    to2 <- 40000
   }
-  plot(density(nHan$p, from = 0, to = to, kernel = 'rectangular'), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "p-Value")
-  abline(v = 0.05)
+  plot(density(nHan$p, from = 0, to = to), lty = 1,lwd = 2, main = paste('n =',n[i]), xlab = "", ylab = "",
+       bty = "n", cex.main=2.5, cex.axis = 1.1, font.main = 1, ylim = c(0, to2))
+  abline(v = 0.05, lwd = 2, col = "grey40")
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Normal", power = power))
   
   nHas <- subset(Has, Has$n == n[i])
   power <- 1 - length(nHas$n[nHas$p > 0.05])/nrow(nHas) # power: 1 - type 2 error
-  lines(density(nHas$p, from = 0, to = to, kernel = 'rectangular' ), lty = 2,lwd = 1,)
-  abline(v = 0.05)
+  lines(density(nHas$p, from = 0, to = to), lty = 2,lwd = 2,)
+  if(n[i] == 15)
+    title(ylab="Density", line=2.7, cex.lab=1.7)
+  if(n[i] == 40)
+    title(xlab = substitute(paste(italic("p"), "-value")), line=3.2, cex.lab=2.5)
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Skewed", power = power))
 }
 powerFrame
@@ -247,18 +266,31 @@ powerFrame
 powerFrame <- data.frame()
 
 for(i in 1:length(n)){
+  if(n[i] == 15){
+    to3 <- .5
+  }else if(n[i] == 40){
+    to3 <- .25
+  }else if(n[i] == 150){
+    to3 <- .15
+  }
+  
   nHan <- subset(Han, Han$n == n[i])
   power <- 1 - length(nHan$n[nHan$BF < 3])/nrow(nHan) # power: 1 - type 2 error
-  plot(density(log(nHan$BF), kernel = 'rectangular' ), lty = 1,lwd = 1, main = paste('n =',n[i]), xlab = "log(BF)", xlim = c(-3, 15))
+  plot(density(log(nHan$BF)), lty = 1,lwd = 2, main = "", xlab = "", ylab = "", bty = "n",
+       cex.main=2.5, cex.axis = 1.1, font.main = 1, ylim = c(0, to3))
   abline(v = log(3))
   abline(v = -log(3))
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Normal", power = power))
   
   nHas <- subset(Has, Has$n == n[i])
   power <- 1- length(nHas$n[nHas$BF < 3])/nrow(nHas) #true positive
-  lines(density(log(nHas$BF), kernel = 'rectangular' ), lty = 2,lwd = 1, main = paste('n =',n[i]))
-  abline(v = log(3))
-  abline(v = -log(3))
+  lines(density(log(nHas$BF)), lty = 2,lwd = 2, main = paste('n =',n[i]))
+  abline(v = log(3), lwd = 2, col = "grey40")
+  abline(v = -log(3), lwd = 2, col = "grey40")
+  if(n[i] == 15)
+    title(ylab="Density", line=2.7, cex.lab=1.7)
+  if(n[i] == 40)
+    title(xlab = "log(BF)", line=3.2, cex.lab=2.5)
   powerFrame <- rbind(powerFrame, list(n = n[i], shape = "Skewed", power = power))
 }
 powerFrame
@@ -369,7 +401,8 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=1.5, horiz = TRUE)
+       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=2, horiz = FALSE)
+par(las = 1)
 
 type1errors <- data.frame()
 
@@ -379,19 +412,26 @@ for(i in 1:length(n)){
     subgroupSize <- k[j]
     nnonViolatedH0 <- subset(nonViolatedH0, nonViolatedH0$n == sampleSize & nonViolatedH0$k == subgroupSize)
     type1 <- length(nnonViolatedH0$n[nnonViolatedH0$p < 0.05])/nrow(nnonViolatedH0) #type I errors
-    plot(density((nnonViolatedH0$p), from = 0, to = 1, kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab="p-Value", xlim = c(0, 1))
-    abline(v = 0.05)
+    plot(density((nnonViolatedH0$p), from = 0, to = 1), lty = 1,lwd = 2, main = paste("n = ", n[i], ', k = ', k[j], sep = ''),
+         xlab="", ylab = "", xlim = c(0, 1), bty = "n", cex.main=2.5, cex.axis = 1.1, font.main = 1,
+         ylim = c(0.5, 1.3))
+    abline(v = 0.05, lwd = 2, col = "gray40")
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "None", type1 = type1))
     
     nspherViolatedH0 <- subset(spherViolatedH0, spherViolatedH0$n == sampleSize & spherViolatedH0$k == subgroupSize)
     type1 <- length(nspherViolatedH0$n[nspherViolatedH0$p < 0.05])/nrow(nspherViolatedH0) #type I errors
-    lines(density((nspherViolatedH0$p),from = 0, to = 1,  kernel = 'rectangular'), lty = 2, lwd = 1)
+    lines(density((nspherViolatedH0$p),from = 0, to = 1), lty = 2, lwd = 2)
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Sphericity", type1 = type1))
     
     nnormViolatedH0 <- subset(normViolatedH0, normViolatedH0$n == sampleSize & normViolatedH0$k == subgroupSize)
     type1 <- length(nnormViolatedH0$n[nnormViolatedH0$p < 0.05])/nrow(nnormViolatedH0) #type I errors
-    lines(density((nnormViolatedH0$p), from = 0, to = 1, kernel = 'rectangular'), lty = 3, lwd = 1)
+    lines(density((nnormViolatedH0$p), from = 0, to = 1), lty = 3, lwd = 2)
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Normality", type1 = type1))
+    
+    if(n[i] == 15)
+      title(ylab="Density", line=2.7, cex.lab=1.7)
+    if(n[i] == 45)
+      title(xlab = substitute(paste(italic("p"), "-value")), line=3.2, cex.lab=2.5)
   }
 }
 type1errors
@@ -410,8 +450,8 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=1.5, horiz = TRUE)
-
+       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=2, horiz = F)
+par(las = 1)
 
 type1errors <- data.frame()
 
@@ -421,24 +461,30 @@ for(i in 1:length(n)){
     subgroupSize <- k[j]
     nnonViolatedH0 <- subset(nonViolatedH0, nonViolatedH0$n == sampleSize & nonViolatedH0$k == subgroupSize)
     type1 <- length(nnonViolatedH0$n[nnonViolatedH0$BF > 3])/nrow(nnonViolatedH0) #type I errors
-    plot(density(log(nnonViolatedH0$BF), kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'log(BF)')
-    abline(v = -log(3))
-    abline(v = log(3))
+    plot(density(log(nnonViolatedH0$BF)), lty = 1,lwd = 2, main = paste("n = ", n[i], ', k = ', k[j], sep = ''),
+         xlab = '', ylab = "", bty = "n", cex.main=2.5, cex.axis = 1.1, font.main = 1, ylim = c(0, .9))
+    abline(v = -log(3), lwd = 2, col = "gray40")
+    abline(v = log(3), lwd = 2, col = "gray40")
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "None", type1 = type1))
     
     nspherViolatedH0 <- subset(spherViolatedH0, spherViolatedH0$n == sampleSize & spherViolatedH0$k == subgroupSize)
     type1 <- length(nspherViolatedH0$n[nspherViolatedH0$BF > 3])/nrow(nspherViolatedH0) #type I errors
-    lines(density(log(nspherViolatedH0$BF), kernel = 'rectangular'), lty = 2,lwd = 1)
+    lines(density(log(nspherViolatedH0$BF)), lty = 2,lwd = 2)
     abline(v = -log(3))
     abline(v = log(3))
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "Sphericity", type1 = type1))
     
     nnormViolatedH0 <- subset(normViolatedH0, normViolatedH0$n == sampleSize & normViolatedH0$k == subgroupSize)
     type1 <- length(nnormViolatedH0$n[nnormViolatedH0$BF > 3])/nrow(nnormViolatedH0) #type I errors
-    lines(density(log(nnormViolatedH0$BF), kernel = 'rectangular'), lty = 3,lwd = 1)
+    lines(density(log(nnormViolatedH0$BF)), lty = 3,lwd = 2)
     abline(v = -log(3))
     abline(v = log(3))
     type1errors <- rbind(type1errors, list(n = n[i], k = k[j], violations = "normality", type1 = type1))
+    
+    if(n[i] == 15)
+      title(ylab="Density", line=2.7, cex.lab=1.7)
+    if(n[i] == 45)
+      title(xlab = "log(BF)", line=3.2, cex.lab=2.5)
   }
 }
 type1errors
@@ -472,38 +518,53 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=1.5, horiz = TRUE)
-
+       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=2, horiz = F)
+par(las = 1)
 
 powerFrame <- data.frame()
 
 for(i in 1:length(n)){
   sampleSize <- n[i]
-  if(sampleSize == 15){
-    to <- 1
-  }else if(sampleSize == 45){
-    to <- 0.10
-  }else if(sampleSize == 150){
-    to <- 0.001
-  }
   for(j in 1:length(k)){
     subgroupSize <- k[j]
+    
+    if(sampleSize == 15){
+      to <- 1
+      to2 <- 12
+    }else if(sampleSize == 45){
+      to <- 0.08
+      if(k[j] == 5){
+        to2 <- 1000
+      }else{
+        to2 <- 320
+      }
+    }else if(sampleSize == 150){
+      to <- 0.001
+      to2 <- 6500000
+    }
+    
     nnonViolatedHa <- subset(nonViolatedHa, nonViolatedHa$n == sampleSize & nonViolatedHa$k == subgroupSize)
     power <- 1 - length(nnonViolatedHa$n[nnonViolatedHa$p > 0.05])/nrow(nnonViolatedHa) #power
     
-    plot(density((nnonViolatedHa$p), from = 0, to = to), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'p-Value')
-    abline(v = 0.05)
+    plot(density((nnonViolatedHa$p), from = 0, to = to), lty = 1,lwd = 2, main = paste("n = ", n[i], ', k = ', k[j], sep = ''),
+         xlab = '', ylab = "", bty = "n", cex.main=2.5, cex.axis = 1.1, font.main = 1, ylim = c(0, to2))
+    abline(v = 0.05, lwd = 2, col = "gray40")
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "None", power = power))
     
     nspherViolatedHa <- subset(spherViolatedHa, spherViolatedHa$n == sampleSize & spherViolatedHa$k == subgroupSize)
     power <- 1 -length(nspherViolatedHa$n[nspherViolatedHa$p > 0.05])/nrow(nspherViolatedHa) #power
-    lines(density((nspherViolatedHa$p)), lty = 2, lwd = 1)
+    lines(density((nspherViolatedHa$p)), lty = 2, lwd = 2)
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Sphericity", power = power))
     
     nnormViolatedHa <- subset(normViolatedHa, normViolatedHa$n == sampleSize & normViolatedHa$k == subgroupSize)
     power <- 1 -length(nnormViolatedHa$n[nnormViolatedHa$p > 0.05])/nrow(nnormViolatedHa) #power
-    lines(density((nnormViolatedHa$p)), lty = 3, lwd = 1)
+    lines(density((nnormViolatedHa$p)), lty = 3, lwd = 2)
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Normality", power = power))
+    
+    if(n[i] == 15)
+      title(ylab="Density", line=2.7, cex.lab=1.7)
+    if(n[i] == 45)
+      title(xlab = substitute(paste(italic("p"), "-value")), line=3.2, cex.lab=2.5)
   }
 }
 powerFrame
@@ -522,7 +583,8 @@ layout(mat = m)
 plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 
 legend(x = "bottom",inset = 0,
-       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=1.5, horiz = TRUE)
+       legend = c("Ideal", "Sphericity Violated", "Normality Violated" ),lty = c(1,2,3),lwd=2.5, cex=2, horiz = F)
+par(las = 1)
 
 
 powerFrame <- data.frame()
@@ -531,26 +593,36 @@ for(i in 1:length(n)){
   sampleSize <- n[i]
   for(j in 1:length(k)){
     subgroupSize <- k[j]
+    if(n[i] == 15){
+      to <- .4
+    }else if(n[i] == 45){
+      to <- .15
+    }else if(n[i] == 150){
+      to <- .1
+    }
     nnonViolatedHa <- subset(nonViolatedHa, nonViolatedHa$n == sampleSize & nonViolatedHa$k == subgroupSize)
     power <- 1 - length(nnonViolatedHa$n[nnonViolatedHa$BF < 3])/nrow(nnonViolatedHa) #power
-    plot(density(log(nnonViolatedHa$BF), kernel = 'rectangular'), lty = 1,lwd = 1, main = paste("n = ", n[i], ', k = ', k[j], sep = ''), xlab = 'log(BF)')
-    abline(v = -log(3))
-    abline(v = log(3))
+    plot(density(log(nnonViolatedHa$BF), kernel = 'rectangular'), lty = 1,lwd = 2, main = paste("n = ", n[i], ', k = ', k[j], sep = ''),
+         xlab = '', ylab = "", bty = "n", cex.main=2.5, cex.axis = 1.1, font.main = 1, ylim = c(0, to))
+    abline(v = -log(3), lwd = 2, col = "gray40")
+    abline(v = log(3), lwd = 2, col = "gray40")
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "None", power = power))
     
     nspherViolatedHa <- subset(spherViolatedHa, spherViolatedHa$n == sampleSize & spherViolatedHa$k == subgroupSize)
     power <- 1 - length(nspherViolatedHa$n[nspherViolatedHa$BF < 3])/nrow(nspherViolatedHa) #power
-    lines(density(log(nspherViolatedHa$BF), kernel = 'rectangular'), lty = 2,lwd = 1)
-    abline(v = -log(3))
-    abline(v = log(3))
+    lines(density(log(nspherViolatedHa$BF), kernel = 'rectangular'), lty = 2,lwd = 2)
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Sphericity", power = power))
     
     nnormViolatedHa <- subset(normViolatedHa, normViolatedHa$n == sampleSize & normViolatedHa$k == subgroupSize)
     power <- 1 - length(nnormViolatedHa$n[nnormViolatedHa$BF < 3])/nrow(nnormViolatedHa) #power
-    lines(density(log(nnormViolatedHa$BF), kernel = 'rectangular'), lty = 3,lwd = 1)
-    abline(v = -log(3))
-    abline(v = log(3))
+    lines(density(log(nnormViolatedHa$BF), kernel = 'rectangular'), lty = 3,lwd = 2)
     powerFrame <- rbind(powerFrame, list(n = n[i], k = k[j], violations = "Normality", power = power))
+    
+    
+    if(n[i] == 15)
+      title(ylab="Density", line=2.7, cex.lab=1.7)
+    if(n[i] == 45)
+      title(xlab = "log(BF)", line=3.2, cex.lab=2.5)
   }
 }
 powerFrame
