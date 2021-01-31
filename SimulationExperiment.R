@@ -12,7 +12,7 @@ dataGenerationPairedT <- function(normality, n, hypothesis){
     sampleMeanAndSD <- rnorm(n = n, mean = ifelse(hypothesis == 'H0', 0, Ha), sd = sd)
     mean <- mean(sampleMeanAndSD)
     SD <- sd(sampleMeanAndSD)
-    data <- sn::rst(n = n, xi = 0, omega = 1, alpha = -30)
+    data <- sn::rsn(n = n, xi = 0, omega = 1, alpha = -30)
     data <- mean + SD*scale(data)
   }
   return(data)
@@ -124,12 +124,12 @@ for(i in 1:nrow(options)){
   results[i,] <- list(n = options[["n"]][i], hypothesis = options[["hypothesis"]][i], normality = options[["normality"]][i],
                       p = p.value, mean = mean(data), BF = BF, Shapiro = shapiro.test(data)$p.value)
 }
-write.csv(results, 'pairedTresults2.csv')
+write.csv(results, 'pairedTresults3.csv')
 
 ########################################################################
 #RESULTS PAIRED T TEST
 ########################################################################
-results <- read.csv("pairedTresults2.csv")
+results <- read.csv("pairedTresults3.csv")
 
 #Normal Data
 
